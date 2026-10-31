@@ -22,10 +22,6 @@ export function AuthLayout({
       </header>
       <main className="mx-auto grid w-full max-w-7xl items-center gap-8 pb-5 pt-7 sm:pt-10 lg:min-h-[calc(100vh-108px)] lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-10">
         <section className="mx-auto w-full max-w-xl lg:mx-0">
-          <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#dfe9dc] bg-white/80 px-3 py-1.5 text-xs font-semibold text-[#507454]">
-            <span className="h-2 w-2 rounded-full bg-[#4cbf7a]" />
-            Make space for steady growth
-          </p>
           <h1 className="max-w-xl text-4xl font-bold leading-[1.12] tracking-[-0.04em] text-[#17231c] sm:text-5xl">
             {heading}
           </h1>

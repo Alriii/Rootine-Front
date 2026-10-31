@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { AuthContext } from "@/components/auth/AuthContext";
 import type { AuthUser, ThemePreference, UserPreferences } from "@/components/auth/authTypes";
+import { apiRequest } from "@/lib/api";
 
 const SESSION_KEY = "rootine.auth.session";
 const PREFERENCES_KEY = "rootine.preferences";
@@ -11,71 +12,17 @@ function readThemePreference(): ThemePreference {
   if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
     return storedTheme;
   }
-  try {
-    const storedPreferences = localStorage.getItem(PREFERENCES_KEY);
-    if (storedPreferences) {
-      const parsed: unknown = JSON.parse(storedPreferences);
-      if (
-        typeof parsed === "object" &&
-        parsed !== null &&
-        "appearance" in parsed &&
-        (parsed.appearance === "light" || parsed.appearance === "dark" || parsed.appearance === "system")
-      ) {
-        return parsed.appearance;
-      }
-    }
-  } catch (error) {
-    console.error("Unable to restore the saved theme preference.", error);
-  }
   return "light";
-}
-
-function removeStoredSession() {
-  try {
-    sessionStorage.removeItem(SESSION_KEY);
-  } catch (error) {
-    console.error("Unable to clear the stored Rootine session.", error);
-  }
 }
 
 function readSession(): AuthUser | null {
   try {
-    const stored = sessionStorage.getItem(SESSION_KEY);
+    const stored = localStorage.getItem(SESSION_KEY);
     if (!stored) return null;
-    const parsed: unknown = JSON.parse(stored);
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "name" in parsed &&
-      "email" in parsed &&
-      typeof parsed.name === "string" &&
-      typeof parsed.email === "string"
-    ) {
-      return { name: parsed.name, email: parsed.email };
-    }
-    console.error("Stored Rootine session has an invalid format.");
-    removeStoredSession();
-  } catch (error) {
-    console.error("Unable to restore the Rootine session.", error);
-    removeStoredSession();
+    return JSON.parse(stored);
+  } catch {
+    return null;
   }
-  return null;
-}
-
-function createUser(email: string): AuthUser {
-  const normalizedEmail = email.trim().toLowerCase();
-  const emailName = normalizedEmail.split("@")[0]?.replace(/[._-]+/g, " ") ?? "";
-  const name = emailName
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-  return { name: name || "Rootine member", email: normalizedEmail };
-}
-
-function restoreUserPreferences(user: AuthUser): AuthUser {
-  const preferences = getStoredPreferences(user);
-  return { ...user, name: preferences.displayName };
 }
 
 function getStoredPreferences(user: AuthUser): UserPreferences {
@@ -88,28 +35,12 @@ function getStoredPreferences(user: AuthUser): UserPreferences {
   try {
     const stored = localStorage.getItem(PREFERENCES_KEY);
     if (!stored) return defaults;
-    const parsed: unknown = JSON.parse(stored);
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "email" in parsed &&
-      parsed.email === user.email &&
-      "displayName" in parsed &&
-      typeof parsed.displayName === "string" &&
-      "appearance" in parsed &&
-      (parsed.appearance === "light" || parsed.appearance === "dark" || parsed.appearance === "system") &&
-      "notificationsEnabled" in parsed &&
-      typeof parsed.notificationsEnabled === "boolean"
-    ) {
-      return {
-        displayName: parsed.displayName,
-        email: user.email,
-        appearance: parsed.appearance,
-        notificationsEnabled: parsed.notificationsEnabled,
-      };
+    const parsed = JSON.parse(stored);
+    if (parsed && typeof parsed === "object") {
+      return { ...defaults, ...parsed };
     }
-  } catch (error) {
-    console.error("Unable to restore Rootine preferences.", error);
+  } catch {
+    // ignore error
   }
   return defaults;
 }
@@ -117,13 +48,40 @@ function getStoredPreferences(user: AuthUser): UserPreferences {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(readSession);
   const [themePreference, setThemePreference] = useState<ThemePreference>(readThemePreference);
-  const [isReady] = useState(true);
+  const [isReady, setIsReady] = useState(false);
+
+  // Check current user profile from backend on app mount
+  useEffect(() => {
+    const token = localStorage.getItem("rootine_access_token");
+    if (!token) {
+      setIsReady(true);
+      return;
+    }
+
+    apiRequest<{ status: string; data: { user: AuthUser } }>("/auth/me")
+      .then((res) => {
+        if (res.data?.user) {
+          setUser(res.data.user);
+          localStorage.setItem(SESSION_KEY, JSON.stringify(res.data.user));
+        }
+      })
+      .catch(() => {
+        // Token expired or invalid
+        localStorage.removeItem("rootine_access_token");
+        localStorage.removeItem("rootine_refresh_token");
+        localStorage.removeItem(SESSION_KEY);
+        setUser(null);
+      })
+      .finally(() => {
+        setIsReady(true);
+      });
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const applyTheme = () => {
-      const useDarkTheme = themePreference === "dark" ||
-        (themePreference === "system" && mediaQuery.matches);
+      const useDarkTheme =
+        themePreference === "dark" || (themePreference === "system" && mediaQuery.matches);
       document.documentElement.dataset.theme = useDarkTheme ? "dark" : "light";
     };
 
@@ -137,49 +95,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setThemePreference(theme);
   }
 
-  function setAuthenticatedUser(nextUser: AuthUser) {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));
-    setUser(nextUser);
+  async function login(email: string, password: string): Promise<AuthUser> {
+    const response = await apiRequest<{
+      status: string;
+      message: string;
+      data: {
+        token: string;
+        refreshToken: string;
+        user: { id: string; name: string; email: string; emailVerified: boolean };
+      };
+    }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email: email.trim(), password }),
+    });
+
+    const { token, refreshToken, user: loggedInUser } = response.data;
+    localStorage.setItem("rootine_access_token", token);
+    localStorage.setItem("rootine_refresh_token", refreshToken);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(loggedInUser));
+
+    setUser(loggedInUser);
+    return loggedInUser;
   }
 
-  async function login(email: string, password: string) {
-    await new Promise((resolve) => window.setTimeout(resolve, 350));
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      throw new Error("Enter a valid email address.");
-    }
-    if (!password) {
-      throw new Error("Enter your password.");
-    }
-    const nextUser = restoreUserPreferences(createUser(email));
-    setAuthenticatedUser(nextUser);
-    return nextUser;
+  async function signup(data: {
+    name: string;
+    email: string;
+    password: string;
+    phoneNumber: string;
+    city: string;
+    countryCode: string;
+  }): Promise<void> {
+    await apiRequest<{ status: string; message: string }>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({
+        name: data.name.trim(),
+        email: data.email.trim(),
+        password: data.password,
+        phoneNumber: data.phoneNumber.trim(),
+        countryCode: data.countryCode.trim(),
+        city: data.city.trim(),
+      }),
+    });
   }
 
-  async function signup(email: string, password: string) {
-    await new Promise((resolve) => window.setTimeout(resolve, 350));
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      throw new Error("Enter a valid email address.");
+  async function logout() {
+    const refreshToken = localStorage.getItem("rootine_refresh_token");
+    if (refreshToken) {
+      try {
+        await apiRequest("/auth/logout", {
+          method: "POST",
+          body: JSON.stringify({ refreshToken }),
+        });
+      } catch {
+        // silent fail on logout request
+      }
     }
-    if (password.length < 8) {
-      throw new Error("Use a password with at least 8 characters.");
-    }
-    const nextUser = restoreUserPreferences(createUser(email));
-    setAuthenticatedUser(nextUser);
-    return nextUser;
-  }
-
-  function logout() {
-    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem("rootine_access_token");
+    localStorage.removeItem("rootine_refresh_token");
+    localStorage.removeItem(SESSION_KEY);
     setUser(null);
   }
 
   function updateUser(updates: Pick<AuthUser, "name" | "email">) {
     if (!user) throw new Error("Sign in before updating profile information.");
-    const nextUser = { name: updates.name.trim(), email: updates.email.trim().toLowerCase() };
-    if (!nextUser.name || !nextUser.email) {
-      throw new Error("Display name and email are required.");
-    }
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));
+    const nextUser = { ...user, ...updates };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));
     setUser(nextUser);
   }
 

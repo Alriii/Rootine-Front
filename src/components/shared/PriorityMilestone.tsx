@@ -1,55 +1,97 @@
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { DashboardIcon } from "@/components/shared/DashboardIcon";
+import { Spinner } from "@/components/ui/spinner";
 import { formatDate } from "@/utils/calendarUtils";
 import type { Task } from "@/components/shared/types";
 
 interface PriorityMilestoneProps {
 	task?: Task;
-	onComplete: () => void;
+	onComplete: () => Promise<void> | void;
 	badgeLabel?: string;
+	onOpenAddTask?: () => void;
 }
 
-export function PriorityMilestone({ task, onComplete, badgeLabel = "Upcoming Focus" }: PriorityMilestoneProps) {
+export function PriorityMilestone({ task, onComplete, onOpenAddTask }: PriorityMilestoneProps) {
+	const [isCompleting, setIsCompleting] = useState(false);
+	const isPending = task && !task.completed;
+
+	async function handleComplete() {
+		setIsCompleting(true);
+		try {
+			await onComplete();
+		} finally {
+			setIsCompleting(false);
+		}
+	}
+
 	return (
-		<Card className="rounded-2xl border-[#E2E8F0] bg-white p-5 shadow-none sm:p-6">
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<div className="flex items-center gap-2.5">
-					<span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFF3E8] text-[#E58A32]">
-						<DashboardIcon name="alert" className="h-[18px] w-[18px]" />
-					</span>
-					<h2 className="text-base font-semibold text-[#0F172A]">Priority Milestone</h2>
-				</div>
-				<span className="rounded-full bg-[#FFF3E8] px-2.5 py-1 text-[10px] font-semibold text-[#C66B1D]">
-					{badgeLabel}
+		<Card className="rounded-2xl border border-[#e4ece6] bg-white p-5 shadow-xs sm:p-5.5">
+			{/* Header: Flag icon + Priority Milestone */}
+			<div className="flex items-center gap-2">
+				<span className="text-[#194d33]">
+					<svg className="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+						<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+						<line x1="4" y1="22" x2="4" y2="15" />
+					</svg>
 				</span>
+				<h2 className="text-sm font-bold text-[#173826]">Priority Milestone</h2>
 			</div>
-			<div className="mt-5 rounded-xl border border-[#E9EDF0] bg-[#FCFDFC] p-4">
-				<div className="flex items-start gap-3">
-					<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2E7D52] text-white">
-						<DashboardIcon name="bolt" className="h-[17px] w-[17px]" />
+
+			{isPending ? (
+				<div className="mt-4 flex items-start gap-3.5">
+					<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#ebf4ed] text-xl">
+						🌱
 					</span>
 					<div className="min-w-0 flex-1">
-						<h3 className="text-sm font-semibold leading-5 text-[#1E293B]">
-							{task?.title ?? "Quarterly Team Planning Call"}
+						<h3 className="truncate text-sm font-bold text-[#173826]">
+							{task.title}
 						</h3>
-						<p className="mt-1 text-xs text-[#94A3B8]">
-							Due Date: {task ? `${formatDate(task.date)} at ${task.time}` : "Oct 26, 2026 at 10:30 AM"}
+						<p className="mt-0.5 text-xs text-[#70897b]">
+							Due: {formatDate(task.date)} at {task.time}
 						</p>
-						<span className="mt-3 inline-flex rounded-md bg-[#F1F5F9] px-2 py-0.5 text-[10px] font-medium text-[#64748B]">
-							Work
-						</span>
+						<button
+							type="button"
+							onClick={handleComplete}
+							disabled={isCompleting}
+							className="mt-2.5 inline-flex items-center gap-1.5 rounded-xl bg-[#194d33] px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-[#143e29] disabled:opacity-80 disabled:cursor-wait"
+						>
+							{isCompleting ? (
+								<>
+									<Spinner className="h-3.5 w-3.5 text-white" />
+									<span>Completing...</span>
+								</>
+							) : (
+								<>
+									<DashboardIcon name="check" className="h-3.5 w-3.5" />
+									<span>Mark Complete</span>
+								</>
+							)}
+						</button>
 					</div>
 				</div>
-				<Button
-					variant="tertiary"
-					disabled={!task || task.completed}
-					onClick={onComplete}
-					className="mt-3 px-0 py-1 text-xs font-semibold text-[#2E7D52] hover:text-[#15803D]"
-				>
-					{task?.completed ? "Completed" : "Mark Complete"}
-				</Button>
-			</div>
+			) : (
+				<div className="mt-4 flex items-start gap-3.5">
+					<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#ebf4ed] text-xl">
+						🌱
+					</span>
+					<div className="min-w-0 flex-1">
+						<h3 className="text-sm font-bold text-[#173826]">
+							No priority milestones yet
+						</h3>
+						<p className="mt-1 text-xs leading-relaxed text-[#5a7365]">
+							Milestones help you focus on what matters most. Set one when you're ready.
+						</p>
+						<button
+							type="button"
+							onClick={onOpenAddTask}
+							className="mt-2.5 inline-flex items-center gap-1 text-xs font-bold text-[#194d33] transition hover:underline"
+						>
+							+ Set Milestone
+						</button>
+					</div>
+				</div>
+			)}
 		</Card>
 	);
 }

@@ -56,27 +56,24 @@ export function useUpcoming() {
 		);
 	}
 
-	function selectTimelineFilter(filter: TimelineFilter) {
-		setTimelineFilter(filter);
+	function selectTimelineFilter(nextFilter: TimelineFilter) {
+		setTimelineFilter(nextFilter);
 		setSummarySelection(
-			filter === "This Week"
+			nextFilter === "This Week"
 				? "dueThisWeek"
-				: filter === "High Priority"
+				: nextFilter === "High Priority"
 					? "highPriority"
-					: filter === "All"
-						? "totalScheduled"
-						: null,
+					: "totalScheduled",
 		);
 	}
 
 	function toggleTaskMenu(id: string) {
-		taskState.setOpenMenuId((openId) => openId === id ? null : id);
+		taskState.setOpenMenuId((openId) => (openId === id ? null : id));
 	}
 
 	return {
 		search: taskState.search,
 		setSearch: taskState.setSearch,
-		createTask: taskState.createTask,
 		summarySelection,
 		onSummarySelectionChange: selectSummarySection,
 		totalScheduled: timelineTasks.length,
@@ -87,6 +84,8 @@ export function useUpcoming() {
 			filter: timelineFilter,
 			taskCount: filteredTimelineTasks.length,
 			openMenuId: taskState.openMenuId,
+			busyTaskIds: taskState.busyTaskIds,
+			isLoading: taskState.isLoading,
 			onFilterChange: selectTimelineFilter,
 			onToggleTask: taskState.toggleTask,
 			onToggleMenu: toggleTaskMenu,

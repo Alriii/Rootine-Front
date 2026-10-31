@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 
 type DeleteTaskConfirmationProps = {
   taskTitle: string;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void;
 };
 
 export function DeleteTaskConfirmation({
@@ -11,11 +13,22 @@ export function DeleteTaskConfirmation({
   onCancel,
   onConfirm,
 }: DeleteTaskConfirmationProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  async function handleDelete() {
+    setIsDeleting(true);
+    try {
+      await onConfirm();
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-40 flex items-center justify-center bg-[#0F172A]/40 p-4 backdrop-blur-[2px]"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onCancel();
+        if (!isDeleting && event.target === event.currentTarget) onCancel();
       }}
     >
       <section
@@ -32,16 +45,25 @@ export function DeleteTaskConfirmation({
         <div className="mt-6 flex justify-end gap-2">
           <Button
             variant="secondary"
+            disabled={isDeleting}
             onClick={onCancel}
             className="rounded-lg border-[#E2E8F0] bg-white px-4 py-2 text-[#475569] hover:bg-[#F8FAFC]"
           >
             Cancel
           </Button>
           <Button
-            onClick={onConfirm}
-            className="rounded-lg bg-[#B42318] px-4 py-2 text-white hover:bg-[#912018] focus-visible:outline-[#B42318]"
+            disabled={isDeleting}
+            onClick={handleDelete}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#B42318] px-4 py-2 text-white hover:bg-[#912018] focus-visible:outline-[#B42318] disabled:opacity-75 disabled:cursor-wait"
           >
-            Delete Task
+            {isDeleting ? (
+              <>
+                <Spinner className="h-3.5 w-3.5 text-white" />
+                <span>Deleting...</span>
+              </>
+            ) : (
+              "Delete Task"
+            )}
           </Button>
         </div>
       </section>

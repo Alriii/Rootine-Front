@@ -1,4 +1,3 @@
-import { DashboardIcon } from "@/components/shared/DashboardIcon";
 import { TaskRow } from "@/components/shared/TaskRow";
 import type { Task } from "@/components/shared/types";
 import { getCompletedTime } from "@/components/completed/completedUtils";
@@ -6,6 +5,7 @@ import { getCompletedTime } from "@/components/completed/completedUtils";
 interface CompletedTaskListProps {
 	tasks: Task[];
 	openMenuId: string | null;
+	busyTaskIds?: Set<string>;
 	onToggleTask: (id: string) => void;
 	onToggleMenu: (id: string) => void;
 	onDeleteTask: (id: string) => void;
@@ -15,6 +15,7 @@ interface CompletedTaskListProps {
 export function CompletedTaskList({
 	tasks,
 	openMenuId,
+	busyTaskIds,
 	onToggleTask,
 	onToggleMenu,
 	onDeleteTask,
@@ -22,12 +23,12 @@ export function CompletedTaskList({
 }: CompletedTaskListProps) {
 	if (tasks.length === 0) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
-				<span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EDF6EE] text-[#2E7D52]">
-					<DashboardIcon name="check" className="h-5 w-5" />
+			<div className="flex flex-1 flex-col items-center justify-center py-14 text-center">
+				<span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#e8f5ee] to-[#d1ead9] text-2xl shadow-sm">
+					🌱
 				</span>
-				<p className="mt-3 text-sm font-medium text-[#334155]">No finished tasks found</p>
-				<p className="mt-1 text-xs text-[#94A3B8]">Try clearing the date or category filter.</p>
+				<p className="mt-4 text-sm font-semibold text-[#0d1f18]">No completed tasks found</p>
+				<p className="mt-1 text-xs text-[#8aab97]">Finish a task today or adjust your date filter.</p>
 			</div>
 		);
 	}
@@ -40,6 +41,7 @@ export function CompletedTaskList({
 					task={task}
 					timeLabel={getCompletedTime(task)}
 					menuOpen={openMenuId === task.id}
+					isBusy={busyTaskIds?.has(task.id)}
 					onToggle={() => onToggleTask(task.id)}
 					onToggleMenu={() => onToggleMenu(task.id)}
 					onDelete={() => onDeleteTask(task.id)}

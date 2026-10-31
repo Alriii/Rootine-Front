@@ -31,7 +31,7 @@ export function CompletedSidebar({
 			/>
 			<PriorityMilestone
 				task={milestone}
-				badgeLabel="Upcoming Event"
+				badgeLabel="Upcoming Focus"
 				onComplete={onCompleteMilestone}
 			/>
 		</aside>

@@ -23,6 +23,7 @@ export function Calendar({
 		const now = new Date();
 		return { year: now.getFullYear(), month: now.getMonth() };
 	});
+
 	const calendarDays = getCalendarDays(shownMonth.year, shownMonth.month);
 	const scheduledDates = new Set(tasks.map(getTaskDate));
 
@@ -32,20 +33,15 @@ export function Calendar({
 	}
 
 	return (
-		<Card className="rounded-2xl border-[#E2E8F0] bg-white p-5 shadow-none sm:p-6">
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-2.5">
-					<span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EDF6EE] text-[#2E7D52]">
-						<DashboardIcon name="calendar" className="h-[18px] w-[18px]" />
-					</span>
-					<h2 className="text-base font-semibold text-[#0F172A]">Calendar</h2>
-				</div>
+		<Card className="rounded-2xl border border-[#e4ece6] bg-white p-5 shadow-xs sm:p-5.5">
+			{/* Header: < > [calendar icon] Month Year */}
+			<div className="flex items-center gap-3">
 				<div className="flex items-center gap-1">
 					<button
 						type="button"
 						onClick={() => changeMonth(-1)}
 						aria-label="Previous month"
-						className="rounded-lg p-2 text-[#64748B] transition hover:bg-[#F1F5F2] hover:text-[#2E7D52]"
+						className="flex h-7 w-7 items-center justify-center rounded-lg text-[#5a7365] transition hover:bg-[#ebf4ed] hover:text-[#194d33]"
 					>
 						<DashboardIcon name="chevron-left" className="h-4 w-4" />
 					</button>
@@ -53,22 +49,28 @@ export function Calendar({
 						type="button"
 						onClick={() => changeMonth(1)}
 						aria-label="Next month"
-						className="rounded-lg p-2 text-[#64748B] transition hover:bg-[#F1F5F2] hover:text-[#2E7D52]"
+						className="flex h-7 w-7 items-center justify-center rounded-lg text-[#5a7365] transition hover:bg-[#ebf4ed] hover:text-[#194d33]"
 					>
 						<DashboardIcon name="chevron-right" className="h-4 w-4" />
 					</button>
 				</div>
+
+				<div className="flex items-center gap-2">
+					<DashboardIcon name="calendar" className="h-4 w-4 text-[#194d33]" />
+					<h2 className="text-sm font-bold text-[#173826]">
+						{getMonthLabel(shownMonth.year, shownMonth.month)}
+					</h2>
+				</div>
 			</div>
 
-			<p className="mt-4 text-sm font-semibold text-[#334155]">
-				{getMonthLabel(shownMonth.year, shownMonth.month)}
-			</p>
-			<div className="mt-3 grid grid-cols-7 text-center">
-				{["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((weekday) => (
-					<span key={weekday} className="py-2 text-[11px] font-medium uppercase tracking-wide text-[#94A3B8]">
+			{/* Day names */}
+			<div className="mt-4 grid grid-cols-7 text-center">
+				{["SU", "MO", "TU", "WE", "TH", "FR", "SA"].map((weekday) => (
+					<span key={weekday} className="py-1 text-[11px] font-medium tracking-wide text-[#70897b]">
 						{weekday}
 					</span>
 				))}
+
 				{calendarDays.map((day, index) => {
 					if (day === null) return <span key={`empty-${index}`} className="h-9" />;
 					const date = `${shownMonth.year}-${String(shownMonth.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -82,32 +84,36 @@ export function Calendar({
 							onClick={() => onSelectDate(date)}
 							aria-label={`Select ${formatDate(date)}`}
 							aria-pressed={isSelected}
-							className={`relative mx-auto flex h-9 w-9 items-center justify-center rounded-full text-xs transition ${
+							className={`relative mx-auto my-0.5 flex h-8 w-8 flex-col items-center justify-center rounded-full text-xs font-medium transition-all ${
 								isSelected
-									? "bg-[#2E7D52] font-semibold text-white"
-									: "text-[#334155] hover:bg-[#EDF6EE]"
+									? "bg-[#194d33] font-bold text-white shadow-xs"
+									: "text-[#173826] hover:bg-[#ebf4ed]"
 							}`}
 						>
-							{day}
+							<span>{day}</span>
 							{hasTasks && !isSelected && (
-								<span className="absolute bottom-1 h-1 w-1 rounded-full bg-[#22C55E]" />
+								<span className="absolute bottom-1 h-1 w-1 rounded-full bg-[#194d33]" />
 							)}
 						</button>
 					);
 				})}
 			</div>
-			<div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[#EEF1F4] pt-4 text-xs">
-				<span className="inline-flex items-center gap-2 text-[#64748B]">
-					<span className="h-2 w-2 rounded-full bg-[#22C55E]" />
-					Has Schedule Tasks
+
+			{/* Footer: dot + Scheduled days */}
+			<div className="mt-4 flex items-center justify-between border-t border-[#e8ede9] pt-3 text-xs">
+				<span className="inline-flex items-center gap-2 font-medium text-[#5a7365]">
+					<span className="h-1.5 w-1.5 rounded-full bg-[#194d33]" />
+					Scheduled days
 				</span>
-				<button
-					type="button"
-					onClick={onClearDate}
-					className="font-medium text-[#2E7D52] transition hover:text-[#15803D]"
-				>
-					Clear Filter
-				</button>
+				{selectedDate && (
+					<button
+						type="button"
+						onClick={onClearDate}
+						className="font-semibold text-[#194d33] transition hover:underline"
+					>
+						Clear filter
+					</button>
+				)}
 			</div>
 		</Card>
 	);

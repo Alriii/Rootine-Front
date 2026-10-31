@@ -15,7 +15,7 @@ export function useCompleted() {
 	}
 
 	function toggleTaskMenu(id: string) {
-		taskState.setOpenMenuId((openId) => openId === id ? null : id);
+		taskState.setOpenMenuId((openId) => (openId === id ? null : id));
 	}
 
 	const archiveProps = {
@@ -24,6 +24,8 @@ export function useCompleted() {
 		selectedDate: taskState.selectedDate,
 		categoryFilter: taskState.categoryFilter as "All" | Category,
 		openMenuId: taskState.openMenuId,
+		busyTaskIds: taskState.busyTaskIds,
+		isLoading: taskState.isLoading,
 		onCategoryChange: taskState.setCategoryFilter,
 		onToggleTask: taskState.toggleTask,
 		onToggleMenu: toggleTaskMenu,

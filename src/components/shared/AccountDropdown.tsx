@@ -19,7 +19,6 @@ export function AccountDropdown() {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
-
     document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
@@ -34,12 +33,27 @@ export function AccountDropdown() {
     navigate("/login", { replace: true });
   }
 
-  const initials = user?.name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "R";
+  const initials =
+    user?.name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "R";
+
+  const AvatarInner = ({ size }: { size: "sm" | "lg" }) => {
+    const cls =
+      size === "lg"
+        ? "h-10 w-10 text-sm rounded-xl"
+        : "h-9 w-9 text-xs rounded-xl";
+    return (
+      <span
+        className={`flex shrink-0 items-center justify-center bg-[#194d33] font-bold text-white ${cls}`}
+      >
+        {initials}
+      </span>
+    );
+  };
 
   return (
     <div ref={containerRef} className="relative shrink-0">
@@ -49,80 +63,56 @@ export function AccountDropdown() {
         aria-label="User profile"
         aria-haspopup="menu"
         aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
-        onKeyDown={(event) => {
-          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-            event.preventDefault();
-            setOpen(true);
-            window.setTimeout(() => {
-              containerRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
-            }, 0);
-          }
-        }}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-[#DCE5DD] bg-white text-[#2E7D52] transition hover:border-[#A8CCB2] hover:bg-[#EDF6EE] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E7D52]"
+        onClick={() => setOpen((c) => !c)}
+        className="flex items-center gap-1.5 rounded-full p-0.5 transition hover:bg-[#eaf3eb] focus-visible:outline-2 focus-visible:outline-[#194d33]"
       >
-        {user ? (
-          <span aria-hidden="true" className="text-xs font-bold">{initials}</span>
-        ) : (
-          <DashboardIcon name="user" className="h-[19px] w-[19px]" />
-        )}
+        <AvatarInner size="sm" />
+        <svg
+          className="h-3.5 w-3.5 text-[#5a7365] transition-transform duration-150"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
       </button>
+
       {open && (
         <div
           role="menu"
           aria-label="Account menu"
-          onKeyDown={(event) => {
-            const items = Array.from(
-              event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'),
-            );
-            const currentIndex = items.indexOf(document.activeElement as HTMLElement);
-            if (event.key === "Escape") {
-              event.preventDefault();
-              setOpen(false);
-              profileButtonRef.current?.focus();
-            } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-              event.preventDefault();
-              const direction = event.key === "ArrowDown" ? 1 : -1;
-              const nextIndex = currentIndex < 0
-                ? 0
-                : (currentIndex + direction + items.length) % items.length;
-              items[nextIndex]?.focus();
-            } else if (event.key === "Home") {
-              event.preventDefault();
-              items[0]?.focus();
-            } else if (event.key === "End") {
-              event.preventDefault();
-              items.at(-1)?.focus();
-            }
-          }}
-          className="absolute right-0 top-[calc(100%+10px)] z-50 w-[min(19rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#E2E8E0] bg-white shadow-[0_18px_50px_-24px_rgba(15,46,34,0.28)]"
+          className="absolute right-0 top-[calc(100%+8px)] z-50 w-64 overflow-hidden rounded-2xl border border-[#e2ece5] bg-white shadow-xl shadow-[#173826]/10"
         >
-          <div className="flex items-center gap-3 border-b border-[#edf0eb] px-4 py-4">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#EDF6EE] text-sm font-bold text-[#2E7D52]">
-              {initials}
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-[#0F172A]">{user?.name}</span>
-              <span className="mt-0.5 block truncate text-xs text-[#64748B]">{user?.email}</span>
-            </span>
+          {/* User info header */}
+          <div className="flex items-center gap-3 border-b border-[#e2ece5] bg-[#fafdfa] p-3.5">
+            <AvatarInner size="lg" />
+            <div className="min-w-0 flex-1">
+              <span className="block truncate text-xs font-bold text-[#173826]">{user?.name}</span>
+              <span className="block truncate text-[11px] text-[#70897b]">{user?.email}</span>
+            </div>
           </div>
-          <div className="p-2">
+
+          <div className="p-1.5">
             <Link
               to="/preferences"
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#334155] transition hover:bg-[#F4F7F2] hover:text-[#2E7D52] focus-visible:outline-2 focus-visible:outline-[#2E7D52]"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#5a7365] transition hover:bg-[#eaf3eb] hover:text-[#173826]"
             >
-              <DashboardIcon name="settings" className="h-[18px] w-[18px]" />
+              <DashboardIcon name="settings" className="h-4 w-4 text-[#70897b]" />
               Preferences
             </Link>
+            <div className="my-1 border-t border-[#e2ece5]" />
             <button
               type="button"
               role="menuitem"
               onClick={handleSignOut}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#9b3c34] transition hover:bg-[#fff5f3] focus-visible:outline-2 focus-visible:outline-[#b5473b]"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold text-[#b91c1c] transition hover:bg-[#fef2f2]"
             >
-              <DashboardIcon name="logout" className="h-[18px] w-[18px]" />
+              <DashboardIcon name="logout" className="h-4 w-4" />
               Sign Out
             </button>
           </div>

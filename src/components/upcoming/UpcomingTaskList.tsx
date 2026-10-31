@@ -5,6 +5,7 @@ import { formatDate } from "@/utils/calendarUtils";
 interface UpcomingTaskListProps {
 	groups: [string, Task[]][];
 	openMenuId: string | null;
+	busyTaskIds?: Set<string>;
 	onToggleTask: (id: string) => void;
 	onToggleMenu: (id: string) => void;
 	onDeleteTask: (id: string) => void;
@@ -14,6 +15,7 @@ interface UpcomingTaskListProps {
 export function UpcomingTaskList({
 	groups,
 	openMenuId,
+	busyTaskIds,
 	onToggleTask,
 	onToggleMenu,
 	onDeleteTask,
@@ -22,8 +24,11 @@ export function UpcomingTaskList({
 	if (groups.length === 0) {
 		return (
 			<div className="flex min-h-[320px] flex-col items-center justify-center text-center">
-				<p className="text-sm font-medium text-[#334155]">No upcoming tasks</p>
-				<p className="mt-1 text-xs text-[#94A3B8]">Try another filter or date.</p>
+				<span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#e8f5ee] to-[#d1ead9] text-2xl shadow-sm">
+					🗓️
+				</span>
+				<p className="mt-4 text-sm font-semibold text-[#0d1f18]">No upcoming tasks</p>
+				<p className="mt-1 text-xs text-[#8aab97]">Try another filter or schedule a new task.</p>
 			</div>
 		);
 	}
@@ -31,12 +36,14 @@ export function UpcomingTaskList({
 	return (
 		<>
 			{groups.map(([label, tasks]) => (
-				<section key={label} aria-label={label}>
-					<h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#64748B]">
-						<span className="h-2 w-2 rounded-full bg-[#22C55E]" />
-						{label}
-					</h3>
-					<div className="mt-2.5 space-y-2 border-l border-[#D1E7D6] pl-3 sm:ml-[3px] sm:pl-4">
+				<section key={label} aria-label={label} className="space-y-3">
+					<div className="flex items-center gap-2.5">
+						<span className="rounded-lg bg-[#e8f5ee] px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-[#1a6b40]">
+							{label}
+						</span>
+						<div className="h-px flex-1 bg-[#d8e8df]" />
+					</div>
+					<div className="space-y-2 border-l-2 border-[#b8d9c6] pl-3 sm:ml-1 sm:pl-4">
 						{tasks.map((task) => (
 							<TaskRow
 								key={task.id}
@@ -44,6 +51,7 @@ export function UpcomingTaskList({
 								timeLabel={`${formatDate(task.date)} · ${task.time}`}
 								showTimeOnMobile
 								menuOpen={openMenuId === task.id}
+								isBusy={busyTaskIds?.has(task.id)}
 								onToggle={() => onToggleTask(task.id)}
 								onToggleMenu={() => onToggleMenu(task.id)}
 								onDelete={() => onDeleteTask(task.id)}

@@ -17,10 +17,11 @@ export function StatisticsCards({ tasks, todayDateKey, activeSection, onSectionC
 		task.completed && task.completedAt && getCompletionDate(task) === todayDateKey,
 	).length;
 	const pendingCount = tasks.filter((task) => !task.completed).length;
-	const cardButtonClass = "w-full rounded-2xl text-left transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E7D52]";
+	const cardButtonClass =
+		"w-full rounded-2xl text-left transition-[transform,box-shadow] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-[#194d33]";
 
 	return (
-		<section aria-label="Task statistics" className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-3">
+		<section aria-label="Task statistics" className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
 			<button
 				type="button"
 				onClick={() => onSectionChange("today")}
@@ -28,7 +29,13 @@ export function StatisticsCards({ tasks, todayDateKey, activeSection, onSectionC
 				aria-pressed={activeSection === "today"}
 				className={cardButtonClass}
 			>
-				<StatCard icon="list" value={todayCount} label="Today's Tasks" tone="green" active={activeSection === "today"} />
+				<StatCard
+					icon="calendar"
+					value={todayCount}
+					label="TODAY'S TASKS"
+					subtitle="tasks remaining"
+					active={activeSection === "today"}
+				/>
 			</button>
 			<button
 				type="button"
@@ -37,7 +44,13 @@ export function StatisticsCards({ tasks, todayDateKey, activeSection, onSectionC
 				aria-pressed={activeSection === "completedToday"}
 				className={cardButtonClass}
 			>
-				<StatCard icon="check" value={completedCount} label="Completed Today" tone="lime" active={activeSection === "completedToday"} />
+				<StatCard
+					icon="check"
+					value={completedCount}
+					label="COMPLETED TODAY"
+					subtitle="tasks finished"
+					active={activeSection === "completedToday"}
+				/>
 			</button>
 			<button
 				type="button"
@@ -46,7 +59,13 @@ export function StatisticsCards({ tasks, todayDateKey, activeSection, onSectionC
 				aria-pressed={activeSection === "pending"}
 				className={cardButtonClass}
 			>
-				<StatCard icon="alert" value={pendingCount} label="Pending Actions" tone="orange" active={activeSection === "pending"} />
+				<StatCard
+					icon="alert"
+					value={pendingCount}
+					label="PENDING ACTIONS"
+					subtitle="tasks to prioritize"
+					active={activeSection === "pending"}
+				/>
 			</button>
 		</section>
 	);

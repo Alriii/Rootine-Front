@@ -2,6 +2,7 @@ import { AddTaskDialog, Calendar, DashboardHeader, PriorityMilestone } from "@/c
 import { CompletedToday, PendingActions, StatisticsCards, TodaysTasks, useDashboard } from "@/components/dashboard";
 import type { TaskView } from "@/components/shared/types";
 import type { DashboardSection } from "@/components/dashboard";
+import { useState } from "react";
 
 export default function HomePage({
 	taskView = "all",
@@ -17,9 +18,16 @@ export default function HomePage({
 	onSectionChange: (section: DashboardSection) => void;
 }) {
 	const page = useDashboard(taskView);
+	const [internalAddOpen, setInternalAddOpen] = useState(false);
+
+	const isModalOpen = isAddTaskOpen || internalAddOpen;
+	const closeModal = () => {
+		onCloseAddTask();
+		setInternalAddOpen(false);
+	};
 
 	return (
-		<div className="min-h-screen bg-[#FAFCFA]">
+		<div className="min-h-screen bg-[#f2f6f2]">
 			<div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-9 lg:py-8">
 				<DashboardHeader
 					title={
@@ -34,10 +42,8 @@ export default function HomePage({
 							? "Tasks that still need your attention."
 							: activeSection === "completedToday"
 								? "Tasks you've successfully completed today."
-								: undefined
+								: "Plan ahead with clarity. Stay consistent and grow steadily."
 					}
-					search={page.search}
-					onSearchChange={page.setSearch}
 				/>
 				<StatisticsCards
 					tasks={page.tasks}
@@ -52,16 +58,21 @@ export default function HomePage({
 							todayDateKey={page.todayDateKey}
 							search={page.search}
 							openMenuId={page.scheduleProps.openMenuId}
+							busyTaskIds={page.scheduleProps.busyTaskIds}
+							isLoading={page.scheduleProps.isLoading}
 							onToggleTask={page.scheduleProps.onToggleTask}
 							onToggleMenu={page.scheduleProps.onToggleMenu}
 							onDeleteTask={page.scheduleProps.onDeleteTask}
 							onUpdateTask={page.scheduleProps.onUpdateTask}
+							onOpenAddTask={() => setInternalAddOpen(true)}
 						/>
 					) : activeSection === "pending" ? (
 						<PendingActions
 							tasks={page.tasks}
 							search={page.search}
 							openMenuId={page.scheduleProps.openMenuId}
+							busyTaskIds={page.scheduleProps.busyTaskIds}
+							isLoading={page.scheduleProps.isLoading}
 							onToggleTask={page.scheduleProps.onToggleTask}
 							onToggleMenu={page.scheduleProps.onToggleMenu}
 							onDeleteTask={page.scheduleProps.onDeleteTask}
@@ -73,6 +84,7 @@ export default function HomePage({
 							todayDateKey={page.todayDateKey}
 							search={page.search}
 							openMenuId={page.scheduleProps.openMenuId}
+							busyTaskIds={page.scheduleProps.busyTaskIds}
 							onToggleTask={page.scheduleProps.onToggleTask}
 							onToggleMenu={page.scheduleProps.onToggleMenu}
 							onDeleteTask={page.scheduleProps.onDeleteTask}
@@ -81,11 +93,15 @@ export default function HomePage({
 					)}
 					<div className="flex flex-col gap-5">
 						<Calendar {...page.calendarProps} />
-						<PriorityMilestone task={page.milestone} onComplete={page.onCompleteMilestone} />
+						<PriorityMilestone
+							task={page.milestone}
+							onComplete={page.onCompleteMilestone}
+							onOpenAddTask={() => setInternalAddOpen(true)}
+						/>
 					</div>
 				</div>
 			</div>
-			<AddTaskDialog open={isAddTaskOpen} onClose={onCloseAddTask} onCreate={page.createTask} />
+			{isModalOpen && <AddTaskDialog open onClose={closeModal} onCreate={page.createTask} />}
 		</div>
 	);
 }

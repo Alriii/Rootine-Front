@@ -10,6 +10,8 @@ interface PendingActionsProps {
 	tasks: Task[];
 	search: string;
 	openMenuId: string | null;
+	busyTaskIds?: Set<string>;
+	isLoading?: boolean;
 	onToggleTask: (id: string) => void;
 	onToggleMenu: (id: string) => void;
 	onDeleteTask: (id: string) => void;
@@ -18,10 +20,19 @@ interface PendingActionsProps {
 
 const categories: Array<"All" | Category> = ["All", "Work", "Personal", "Health"];
 
+const categoryPills: Record<string, string> = {
+	All: "bg-gradient-to-r from-[#1e7a4a] to-[#15803d] text-white shadow-sm",
+	Work: "bg-[#e8f5ee] text-[#1a6b40]",
+	Personal: "bg-[#eef2ff] text-[#3730a3]",
+	Health: "bg-[#fff4e6] text-[#b45309]",
+};
+
 export function PendingActions({
 	tasks,
 	search,
 	openMenuId,
+	busyTaskIds,
+	isLoading = false,
 	onToggleTask,
 	onToggleMenu,
 	onDeleteTask,
@@ -37,64 +48,84 @@ export function PendingActions({
 	});
 
 	return (
-		<Card className="overflow-visible rounded-2xl border-[#E2E8F0] bg-white p-4 shadow-none sm:p-5 lg:p-6">
-			<div className="flex flex-col gap-4 border-b border-[#EEF1F4] pb-4 sm:flex-row sm:items-center sm:justify-between">
-				<div>
-					<h2 className="text-lg font-semibold tracking-tight text-[#0F172A]">Tasks to complete</h2>
-					<p aria-live="polite" className="mt-1 text-xs text-[#94A3B8]">
-						{pendingTasks.length} pending {pendingTasks.length === 1 ? "action" : "actions"}
-					</p>
-				</div>
-				<div role="group" aria-label="Filter by category" className="flex flex-wrap gap-1.5">
-					{categories.map((category) => (
-						<Button
-							key={category}
-							variant="tertiary"
-							onClick={() => setCategoryFilter(category)}
-							aria-pressed={categoryFilter === category}
-							className={`rounded-lg px-3 py-1.5 text-xs ${
-								categoryFilter === category
-									? "bg-[#EDF6EE] font-semibold text-[#2E7D52] hover:bg-[#EDF6EE] hover:text-[#2E7D52]"
-									: "text-[#64748B] hover:bg-[#F1F5F9]"
-							}`}
-						>
-							{category}
-						</Button>
-					))}
+		<Card className="overflow-visible rounded-2xl border-[#d8e8df] bg-white shadow-sm">
+			<div className="border-b border-[#d8e8df] px-4 pb-4 pt-4 sm:px-5 sm:pt-5 lg:px-6 lg:pt-6">
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+					<div>
+						<div className="flex items-center gap-2">
+							<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#c2570d] to-[#ea580c] text-white shadow-sm">
+								<DashboardIcon name="alert" className="h-4 w-4" />
+							</span>
+							<h2 className="text-base font-bold tracking-tight text-[#0d1f18] sm:text-lg">
+								Pending Actions
+							</h2>
+						</div>
+						<p aria-live="polite" className="mt-1.5 text-xs text-[#4d6658]">
+							{pendingTasks.length} pending {pendingTasks.length === 1 ? "action" : "actions"} requiring attention
+						</p>
+					</div>
+					<div role="group" aria-label="Filter by category" className="flex flex-wrap gap-1.5">
+						{categories.map((category) => {
+							const isSelected = categoryFilter === category;
+							return (
+								<button
+									key={category}
+									type="button"
+									onClick={() => setCategoryFilter(category)}
+									aria-pressed={isSelected}
+									className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all duration-150 active:scale-95 cursor-pointer ${
+										isSelected
+											? "bg-[#194d33] text-white shadow-2xs"
+											: "border border-[#e2ece5] bg-white text-[#4a6354] hover:bg-[#f2f6f2] hover:text-[#173826]"
+									}`}
+								>
+									{category}
+								</button>
+							);
+						})}
+					</div>
 				</div>
 			</div>
-			<div className="mt-4 flex min-h-[340px] flex-col gap-2.5 sm:min-h-[376px]">
-				{filteredTasks.length > 0 ? filteredTasks.map((task) => (
-					<TaskRow
-						key={task.id}
-						task={task}
-						menuOpen={openMenuId === task.id}
-						timeLabel={`${formatDate(task.date)} · ${task.time}`}
-						showTimeOnMobile
-						onToggle={() => onToggleTask(task.id)}
-						onToggleMenu={() => onToggleMenu(task.id)}
-						onDelete={() => onDeleteTask(task.id)}
-						onUpdate={onUpdateTask}
-					/>
-				)) : (
-					<div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
-						<span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EDF6EE] text-[#2E7D52]">
-							<DashboardIcon name="check" className="h-5 w-5" />
+
+			<div className="flex min-h-[340px] flex-col gap-2 px-4 py-4 sm:min-h-[376px] sm:px-5 lg:px-6">
+				{filteredTasks.length > 0 ? (
+					filteredTasks.map((task) => (
+						<TaskRow
+							key={task.id}
+							task={task}
+							menuOpen={openMenuId === task.id}
+							timeLabel={`${formatDate(task.date)} · ${task.time}`}
+							showTimeOnMobile
+							isBusy={busyTaskIds?.has(task.id)}
+							onToggle={() => onToggleTask(task.id)}
+							onToggleMenu={() => onToggleMenu(task.id)}
+							onDelete={() => onDeleteTask(task.id)}
+							onUpdate={onUpdateTask}
+						/>
+					))
+				) : (
+					<div className="flex flex-1 flex-col items-center justify-center py-14 text-center">
+						<span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#e8f5ee] to-[#d1ead9] text-2xl shadow-sm">
+							{pendingTasks.length === 0 ? "✨" : "🔍"}
 						</span>
-						<p className="mt-3 text-sm font-medium text-[#334155]">
-							{pendingTasks.length === 0 ? "You’re all caught up" : "No tasks found"}
+						<p className="mt-4 text-sm font-semibold text-[#0d1f18]">
+							{pendingTasks.length === 0 ? "You’re all caught up!" : "No tasks found"}
 						</p>
-						<p className="mt-1 text-xs text-[#94A3B8]">
+						<p className="mt-1 text-xs text-[#8aab97]">
 							{pendingTasks.length === 0
 								? "There are no pending actions right now."
-								: "Try another search or category."}
+								: "Try another search or category filter."}
 						</p>
 					</div>
 				)}
 			</div>
-			<div className="mt-4 flex items-center justify-between border-t border-[#EEF1F4] pt-4 text-xs text-[#94A3B8]">
-				<span>Showing {filteredTasks.length} of {pendingTasks.length} pending actions</span>
-				<span>All dates</span>
+
+			<div className="flex items-center justify-between border-t border-[#d8e8df] px-4 py-3 text-xs text-[#8aab97] sm:px-5 lg:px-6">
+				<span>
+					Showing <span className="font-semibold text-[#4d6658]">{filteredTasks.length}</span> of{" "}
+					<span className="font-semibold text-[#4d6658]">{pendingTasks.length}</span> pending actions
+				</span>
+				<span className="font-medium text-[#4d6658]">All dates</span>
 			</div>
 		</Card>
 	);

@@ -5,6 +5,7 @@ import { AuthField } from "@/components/auth/AuthField";
 import { AuthFormCard } from "@/components/auth/AuthFormCard";
 import { AuthPasswordField } from "@/components/auth/AuthPasswordField";
 import { AuthLayout } from "@/pages/auth/layout";
+import { apiRequest } from "@/lib/api";
 
 export default function LoginPage() {
   const { user, login } = useAuth();
@@ -14,6 +15,9 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendNotice, setResendNotice] = useState("");
 
   useEffect(() => {
     if (user) navigate("/", { replace: true });
@@ -22,6 +26,8 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
+    setResendNotice("");
+    setNeedsVerification(false);
     const nextErrors: typeof errors = {};
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -37,10 +43,30 @@ export default function LoginPage() {
         await login(email.trim(), password);
         navigate("/", { replace: true });
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Unable to sign in. Please try again.");
+        const errorMsg = error instanceof Error ? error.message : "Unable to sign in. Please try again.";
+        setMessage(errorMsg);
+        if (errorMsg.toLowerCase().includes("verify your email")) {
+          setNeedsVerification(true);
+        }
       } finally {
         setIsSubmitting(false);
       }
+    }
+  }
+
+  async function handleResendCode() {
+    setResending(true);
+    setResendNotice("");
+    try {
+      await apiRequest<{ status: string; message: string }>("/auth/resend-verification", {
+        method: "POST",
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      setResendNotice("A new 5-digit code has been sent to your email!");
+    } catch (err) {
+      setResendNotice(err instanceof Error ? err.message : "Unable to resend verification code.");
+    } finally {
+      setResending(false);
     }
   }
 
@@ -64,6 +90,7 @@ export default function LoginPage() {
               setEmail(event.target.value);
               setErrors((current) => ({ ...current, email: undefined }));
               setMessage("");
+              setNeedsVerification(false);
             }}
             error={errors.email}
             disabled={isSubmitting}
@@ -97,17 +124,58 @@ export default function LoginPage() {
               disabled={isSubmitting}
             />
           </div>
+
           {message && (
-            <p role="alert" className="rounded-xl border border-[#f1d2ce] bg-[#fff5f3] px-3.5 py-3 text-sm leading-5 text-[#9b3c34]">
-              {message}
+            <div role="alert" className="rounded-xl border border-[#f1d2ce] bg-[#fff5f3] p-4 text-sm text-[#9b3c34]">
+              <p className="font-medium">{message}</p>
+              {needsVerification && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[#f1d2ce] pt-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate("/account-created", {
+                        state: { registrationComplete: true, email: email.trim() },
+                      })
+                    }
+                    className="rounded-lg bg-[#1B7F4E] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#166b41]"
+                  >
+                    Enter 5-Digit Code
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResendCode}
+                    disabled={resending}
+                    className="rounded-lg border border-[#d0dad2] bg-white px-3.5 py-1.5 text-xs font-bold text-[#1B7F4E] transition hover:bg-[#f1f8f0] disabled:opacity-50"
+                  >
+                    {resending ? "Sending..." : "Resend Code"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {resendNotice && (
+            <p role="status" className="rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] px-3.5 py-3 text-xs text-[#166534]">
+              {resendNotice}
             </p>
           )}
+
           <button
             type="submit"
             disabled={isSubmitting}
-            className="h-12 w-full rounded-xl bg-[#1B7F4E] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#166b41] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1B7F4E] active:translate-y-px disabled:cursor-wait disabled:opacity-70"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1B7F4E] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#166b41] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1B7F4E] active:translate-y-px disabled:cursor-wait disabled:opacity-70"
           >
-            {isSubmitting ? "Signing in..." : "Log In"}
+            {isSubmitting ? (
+              <>
+                <svg className="h-5 w-5 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Signing in...</span>
+              </>
+            ) : (
+              "Log In"
+            )}
           </button>
         </form>
         <p className="mt-6 text-center text-sm text-[#68746b]">

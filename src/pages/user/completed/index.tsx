@@ -8,9 +8,12 @@ export default function CompletedPage({
 	const page = useCompleted();
 
 	return (
-		<div className="min-h-screen min-w-0 bg-[#FAFCFA]">
+		<div className="min-h-screen min-w-0 bg-[#f2f6f2]">
 			<div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-9 lg:py-8">
-				<DashboardHeader title="Completed Achievements" subtitle={null} search={page.search} onSearchChange={page.setSearch} />
+				<DashboardHeader
+					title="Completed Achievements"
+					subtitle="Review your finished routines and celebrate your daily progress."
+				/>
 				<CompletedSummary count={page.completedTasks.length} />
 				<div className="mt-6 grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(330px,0.9fr)]">
 					<CompletedArchive {...page.archiveProps} />

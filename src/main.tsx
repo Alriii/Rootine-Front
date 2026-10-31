@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { Sidebar } from "@/components/shared";
+import { TaskProvider } from "@/components/shared/TaskContext";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { useAuth } from "@/components/auth/useAuth";
 import HomePage from "@/pages/user/home";
@@ -51,28 +52,30 @@ function AppContent() {
         path="/*"
         element={
           user ? (
-          <div className="flex h-screen min-h-0 flex-col overflow-hidden md:flex-row">
-            <Sidebar
-              onAddTask={() => setIsAddTaskOpen(true)}
-              onNavigate={() => setActiveSection("today")}
-            />
-            <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-              <Routes>
-                <Route path="/" element={<HomePage {...homePageProps} />} />
-                <Route path="/upcoming" element={<UpcomingPage {...homePageProps} />} />
-                <Route path="/completed" element={<CompletedPage {...homePageProps} />} />
-                <Route
-                  path="/preferences"
-                  element={
-                    <PreferencesPage
-                      isAddTaskOpen={isAddTaskOpen}
-                      onCloseAddTask={() => setIsAddTaskOpen(false)}
-                    />
-                  }
+            <TaskProvider>
+              <div className="flex h-screen min-h-0 flex-col overflow-hidden md:flex-row">
+                <Sidebar
+                  onAddTask={() => setIsAddTaskOpen(true)}
+                  onNavigate={() => setActiveSection("today")}
                 />
-              </Routes>
-            </main>
-          </div>
+                <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+                  <Routes>
+                    <Route path="/" element={<HomePage {...homePageProps} />} />
+                    <Route path="/upcoming" element={<UpcomingPage {...homePageProps} />} />
+                    <Route path="/completed" element={<CompletedPage {...homePageProps} />} />
+                    <Route
+                      path="/preferences"
+                      element={
+                        <PreferencesPage
+                          isAddTaskOpen={isAddTaskOpen}
+                          onCloseAddTask={() => setIsAddTaskOpen(false)}
+                        />
+                      }
+                    />
+                  </Routes>
+                </main>
+              </div>
+            </TaskProvider>
           ) : (
             <Navigate to="/login" replace />
           )

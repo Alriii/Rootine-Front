@@ -38,6 +38,8 @@ export function useDashboard(taskView: TaskView = "all") {
 			selectedDate: taskState.selectedDate,
 			categoryFilter: taskState.categoryFilter,
 			openMenuId: taskState.openMenuId,
+			busyTaskIds: taskState.busyTaskIds,
+			isLoading: taskState.isLoading,
 			onCategoryChange: taskState.setCategoryFilter,
 			onToggleTask: taskState.toggleTask,
 			onToggleMenu: toggleTaskMenu,
