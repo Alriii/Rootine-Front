@@ -19,7 +19,7 @@ export type AuthContextValue = {
   login: (email: string, password: string) => Promise<AuthUser>;
   signup: (data: SignupData) => Promise<void>;
   logout: () => Promise<void>;
-  updateUser: (updates: Pick<AuthUser, "name" | "email">) => void;
+  updateUser: (updates: Partial<Pick<AuthUser, "name" | "email">>) => void;
   getPreferences: () => UserPreferences;
   savePreferences: (preferences: UserPreferences) => void;
 };

@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
-  function updateUser(updates: Pick<AuthUser, "name" | "email">) {
+  function updateUser(updates: Partial<Pick<AuthUser, "name" | "email">>) {
     if (!user) throw new Error("Sign in before updating profile information.");
     const nextUser = { ...user, ...updates };
     localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));

@@ -53,6 +53,11 @@ export function UpcomingTimeline({
 					<h2 className="text-base font-bold text-[#173826]">
 						Chronological Timeline
 					</h2>
+					{taskCount > 0 && (
+						<span className="ml-1 rounded-md bg-[#eaf3eb] px-2 py-0.5 text-xs font-bold text-[#194d33]">
+							{taskCount}
+						</span>
+					)}
 				</div>
 
 				<UpcomingFilters value={filter} onChange={onFilterChange} />

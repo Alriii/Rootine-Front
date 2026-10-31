@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DashboardIcon } from "@/components/shared/DashboardIcon";
 import { TaskRow } from "@/components/shared/TaskRow";
+import { Spinner } from "@/components/ui/spinner";
 import type { Category, Task } from "@/components/shared/types";
 import { formatDate } from "@/utils/calendarUtils";
 import { useState } from "react";
@@ -19,13 +19,6 @@ interface PendingActionsProps {
 }
 
 const categories: Array<"All" | Category> = ["All", "Work", "Personal", "Health"];
-
-const categoryPills: Record<string, string> = {
-	All: "bg-gradient-to-r from-[#1e7a4a] to-[#15803d] text-white shadow-sm",
-	Work: "bg-[#e8f5ee] text-[#1a6b40]",
-	Personal: "bg-[#eef2ff] text-[#3730a3]",
-	Health: "bg-[#fff4e6] text-[#b45309]",
-};
 
 export function PendingActions({
 	tasks,
@@ -88,7 +81,12 @@ export function PendingActions({
 			</div>
 
 			<div className="flex min-h-[340px] flex-col gap-2 px-4 py-4 sm:min-h-[376px] sm:px-5 lg:px-6">
-				{filteredTasks.length > 0 ? (
+				{isLoading ? (
+					<div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
+						<Spinner className="h-8 w-8 text-[#194d33]" />
+						<p className="mt-3 text-xs font-semibold text-[#5a7365]">Loading pending tasks...</p>
+					</div>
+				) : filteredTasks.length > 0 ? (
 					filteredTasks.map((task) => (
 						<TaskRow
 							key={task.id}

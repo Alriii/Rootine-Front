@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/shared/Calendar";
 import { PriorityMilestone } from "@/components/shared/PriorityMilestone";
 import type { Task } from "@/components/shared/types";

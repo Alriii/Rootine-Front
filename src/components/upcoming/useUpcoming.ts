@@ -100,5 +100,6 @@ export function useUpcoming() {
 			onClearDate: () => taskState.setSelectedDate(null),
 			onCompleteMilestone: () => milestone && taskState.toggleTask(milestone.id),
 		},
+		createTask: taskState.createTask,
 	};
 }
