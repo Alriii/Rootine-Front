@@ -1,0 +1,11 @@
+export { AddTaskDialog } from "@/components/shared/AddTaskDialog";
+export { Calendar } from "@/components/shared/Calendar";
+export { DashboardHeader } from "@/components/shared/DashboardHeader";
+export { DashboardIcon } from "@/components/shared/DashboardIcon";
+export { AccountDropdown } from "@/components/shared/AccountDropdown";
+export { PriorityMilestone } from "@/components/shared/PriorityMilestone";
+export { default as Sidebar } from "@/components/shared/Sidebar";
+export { StatCard } from "@/components/shared/StatCard";
+export { TaskRow } from "@/components/shared/TaskRow";
+export { useHomeTasks } from "@/components/shared/useHomeTasks";
+export type { Category, DashboardIconName, Task, TaskView } from "@/components/shared/types";
