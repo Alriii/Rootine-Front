@@ -1,10 +1,19 @@
 // frontend/src/lib/api.ts
 import { useEffect, useState } from "react";
 
-const API_BASE_URL =
-	import.meta.env.VITE_API_URL ||
-	import.meta.env.VITE_API_BASE_URL ||
-	"http://localhost:7000/api/v1";
+function getApiBaseUrl(): string {
+	const raw = (
+		import.meta.env.VITE_API_URL ||
+		import.meta.env.VITE_API_BASE_URL ||
+		"http://localhost:7000/api/v1"
+	).trim().replace(/\/+$/, "");
+
+	if (raw.endsWith("/api/v1")) return raw;
+	if (raw.endsWith("/api")) return `${raw}/v1`;
+	return `${raw}/api/v1`;
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 type LoadingListener = (count: number) => void;
 const listeners = new Set<LoadingListener>();
@@ -52,13 +61,22 @@ export async function apiRequest<T>(
 			headers,
 		});
 
-		const data = await response.json();
+		const data = await response.json().catch(() => ({}));
 
 		if (!response.ok) {
-			throw new Error(data.message || "An unexpected error occurred");
+			throw new Error(
+				(data as { message?: string }).message || `Server returned error (${response.status})`
+			);
 		}
 
-		return data;
+		return data as T;
+	} catch (err) {
+		if (err instanceof TypeError && err.message.toLowerCase().includes("fetch")) {
+			throw new Error(
+				"Unable to reach the server. If your Render backend is waking up from sleep, please wait 30 seconds and retry."
+			);
+		}
+		throw err;
 	} finally {
 		activeRequestsCount = Math.max(0, activeRequestsCount - 1);
 		notify();
